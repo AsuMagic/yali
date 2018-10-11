@@ -5,9 +5,9 @@ namespace yali
 {
 bool run(std::string_view source)
 {
-	compiler comp{source};
+	auto program = compile(source);
 
-	if (!comp)
+	if (!program)
 	{
 		return false;
 	}
