@@ -10,7 +10,8 @@ std::optional<ast::sexpr> compile(std::string_view source)
 	ast::sexpr ast;
 
 	x3::error_handler handler{source.begin(), source.end(), std::cerr};
-	const auto parser = x3::with<x3::error_handler_tag>(std::ref(handler))[parser::sexpr];
+	const auto parser = x3::with<x3::error_handler_tag>(std::ref(handler))[parser::program];
+
 	if (!x3::parse(source.begin(), source.end(), parser, ast))
 	{
 		return {};

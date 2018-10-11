@@ -2,7 +2,6 @@
 #define ERROR_HPP
 
 #include <boost/spirit/home/x3.hpp>
-#include <boost/spirit/home/x3/support/utility/annotate_on_success.hpp>
 #include <boost/spirit/home/x3/support/utility/error_reporting.hpp>
 #include <fmt/format.h>
 
@@ -19,9 +18,8 @@ struct error_handler
 		const Context& ctx
 	)
 	{
-		auto& handler = x3::get<x3::error_handler_tag>(ctx).get();
-		std::string message = fmt::format("error: expected {}:", except.which());
-		handler(except.where(), message);
+		auto& handler = x3::get<x3::error_handler_tag>(ctx);
+		handler(except.where(), fmt::format("error: expected {}:", except.which()));
 
 		return x3::error_handler_result::fail;
 	}
