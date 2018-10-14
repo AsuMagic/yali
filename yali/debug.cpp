@@ -31,6 +31,18 @@ void sexpr_printer::operator()(const ast::sexpr& ast) const
 void sexpr_printer::operator()(const std::string& str) const
 {
 	tab();
-	fmt::print("{}", str);
+	fmt::print("<identifier> {}", str);
+}
+
+void sexpr_printer::operator()(int val) const
+{
+	tab();
+	fmt::print("<integer> {}", val);
+}
+
+void sexpr_printer::operator()(double val) const
+{
+	tab();
+	fmt::print("<real> {}", val);
 }
 }

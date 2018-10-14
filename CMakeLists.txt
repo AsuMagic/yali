@@ -5,6 +5,7 @@ add_executable(${PROJECT_NAME}
 	"main.cpp"
 	"yali/compiler.cpp"
 	"yali/debug.cpp"
+	"yali/vm.cpp"
 	"yali/yali.cpp"
 )
 
@@ -13,6 +14,8 @@ target_compile_options(${PROJECT_NAME} PUBLIC
 	"-pthread"
 	"-Wall"
 	"-Wextra"
+	"-Wno-missing-braces"
+	"-ggdb"
 )
 
 target_link_libraries(${PROJECT_NAME}

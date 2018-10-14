@@ -16,6 +16,8 @@ struct sexpr_printer
 
 	void operator()(const ast::sexpr& ast) const;
 	void operator()(const std::string& str) const;
+	void operator()(int val) const;
+	void operator()(double val) const;
 };
 }
 

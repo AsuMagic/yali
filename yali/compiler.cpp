@@ -5,12 +5,12 @@
 
 namespace yali
 {
-std::optional<ast::sexpr> compile(std::string_view source)
+std::optional<ast::sexpr> parse_ast(std::string_view source)
 {
 	ast::sexpr ast;
 
 	x3::error_handler handler{source.begin(), source.end(), std::cerr};
-	const auto parser = x3::with<x3::error_handler_tag>(std::ref(handler))[parser::program];
+	const auto parser = x3::with<x3::error_handler_tag>(handler)[parser::program_parser];
 
 	if (!x3::parse(source.begin(), source.end(), parser, ast))
 	{

@@ -6,7 +6,6 @@
 */
 
 #include <string_view>
-#include "interpreter.hpp"
 
 namespace yali
 {
