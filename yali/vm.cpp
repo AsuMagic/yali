@@ -2,6 +2,29 @@
 #include <fmt/core.h>
 #include <fmt/color.h>
 
+#define INSTR(label) \
+	label: \
+	auto op = program[ip]; \
+	(void)op; \
+	/*fmt::print("{:5}: op {:15}, depth {:3}, locals: {:4}/{:4}    {}\n", \
+		ip, \
+		bc::def::infos[op.instruction()].name, \
+		frames.size(), \
+		locals.size() - current_callframe().local_frame_offset, \
+		locals.size(), \
+		fmt::join(locals, " ")); \
+	(void)op; // inhibit warning*/
+
+#define DISPATCH() \
+	goto *jump_targets[program[ip].instruction()];
+
+#define NEXT_INSTR() \
+	DISPATCH()
+
+#define NEXT_INSTR_AUTOPC() \
+	++ip; \
+	DISPATCH()
+
 namespace yali
 {
 const callframe& vm::current_callframe() const
@@ -28,117 +51,109 @@ void vm::run(const std::vector<bc::opcode>& program)
 
 	size_t ip = 0;
 
-	for (;;)
+	std::array jump_targets {
+		&&llocal_push,
+		&&llocal_clone,
+		&&llocal_pop,
+		&&llocal_swap,
+		&&linvoke_user,
+		&&linvoke_system,
+		&&lfunc_return,
+		&&ljump_cond
+	};
+
+	DISPATCH()
+
 	{
-		auto op = program[ip];
+		INSTR(llocal_push)
+		locals.push_back(op.read<uint32_t>(8));
+		NEXT_INSTR_AUTOPC()
+	}
 
-		size_t next_ip = ip + 1;
+	{
+		INSTR(llocal_clone)
+		locals.push_back(locals[current_callframe().local_frame_offset + op.read<uint32_t>(8)]);
+		NEXT_INSTR_AUTOPC()
+	}
 
-		/*fmt::print("{:5}: op {:15}, depth {:3}, locals: {:4}/{:4}    ",
-			ip,
-			bc::def::infos[op.instruction()].name,
-			frames.size(),
-			locals.size() - current_callframe().local_frame_offset,
-			locals.size());
+	{
+		INSTR(llocal_pop)
+		locals.pop_back();
+		NEXT_INSTR_AUTOPC()
+	}
 
-		fmt::print("local stack: [");
-		for (size_t i = 0; i < locals.size(); ++i)
+	{
+		INSTR(llocal_swap)
+		std::swap(locals[locals.size() - 2], locals[locals.size() - 1]);
+		NEXT_INSTR_AUTOPC()
+	}
+
+	{
+		INSTR(linvoke_user)
+		auto userfuncip = op.read<uint32_t>(8);
+		auto passthrough = op.read<uint16_t>(40);
+		//fmt::print("invoke_user {}\n", userfuncid);
+		frames.emplace_back(locals.size() - passthrough, ip + 1);
+		ip = userfuncip;
+		NEXT_INSTR()
+	}
+
+	{
+		INSTR(linvoke_system)
+		auto sysfuncid = program[ip].read<uint32_t>(8);
+		auto passthrough = program[ip].read<uint16_t>(40);
+		frames.emplace_back(locals.size() - passthrough, ip + 1);
+		//fmt::print("invoke_system {}\n", sysfuncid);
+		switch (static_cast<bc::system_function>(sysfuncid))
 		{
-			if (i >= current_callframe().local_frame_offset)
-			{
-				fmt::print(fmt::color::orange, "{} ", locals[i]);
-			}
-			else
-			{
-				fmt::print(fmt::color::gray, "{} ", locals[i]);
-			}
-		}
-		fmt::print("]\n");*/
-
-		switch (static_cast<bc::instruction>(op.instruction()))
-		{
-		case bc::instruction::local_push:
-			locals.push_back(op.read<uint32_t>(8));
-			break;
-
-		case bc::instruction::local_clone:
-			locals.push_back(locals[current_callframe().local_frame_offset + op.read<uint32_t>(8)]);
-			break;
-
-		case bc::instruction::local_pop:
-			locals.pop_back();
-			break;
-
-		case bc::instruction::local_swap:
-			std::swap(locals[locals.size() - 2], locals[locals.size() - 1]);
-			break;
-
-		case bc::instruction::invoke_user: {
-			auto userfuncip = op.read<uint32_t>(8);
-			auto passthrough = op.read<uint16_t>(40);
-			//fmt::print("invoke_user {}\n", userfuncid);
-			frames.emplace_back(locals.size() - passthrough, next_ip);
-			next_ip = userfuncip; // HACK
+		case bc::system_function::print_arg: {
+			auto a = local_pop();
+			fmt::print("{}\n", a);
+			return;
 		} break;
 
-		case bc::instruction::invoke_system: {
-			auto sysfuncid = program[ip].read<uint32_t>(8);
-			auto passthrough = program[ip].read<uint16_t>(40);
-			frames.emplace_back(locals.size() - passthrough, next_ip);
-			//fmt::print("invoke_system {}\n", sysfuncid);
-			switch (static_cast<bc::system_function>(sysfuncid))
-			{
-			case bc::system_function::print_arg: {
-				auto a = local_pop();
-				fmt::print("{}\n", a);
-				return;
-			} break;
-
-			case bc::system_function::arith_add: {
-				auto a = local_pop();
-				auto b = local_pop();
-				locals.push_back(a + b);
-			} break;
-
-			case bc::system_function::arith_sub: {
-				auto a = local_pop();
-				auto b = local_pop();
-				locals.push_back(a - b);
-			} break;
-
-			case bc::system_function::cmp_lt: {
-				auto a = local_pop();
-				auto b = local_pop();
-				jump_flag = a < b;
-			} break;
-
-			default:
-				fmt::print("Unhandled system function!\n");
-				return;
-			}
-
-			next_ip = current_callframe().return_address;
-			frames.pop_back();
+		case bc::system_function::arith_add: {
+			auto a = local_pop();
+			auto b = local_pop();
+			locals.push_back(a + b);
 		} break;
 
-		case bc::instruction::jump_cond:
-			if (jump_flag)
-			{
-				next_ip = op.read<uint32_t>(8);
-			}
-			break;
+		case bc::system_function::arith_sub: {
+			auto a = local_pop();
+			auto b = local_pop();
+			locals.push_back(a - b);
+		} break;
 
-		case bc::instruction::func_return:
-			next_ip = current_callframe().return_address;
-			frames.pop_back();
-			break;
+		case bc::system_function::cmp_lt: {
+			auto a = local_pop();
+			auto b = local_pop();
+			jump_flag = a < b;
+		} break;
 
 		default:
-			fmt::print("Unhandled instruction! ID {}\n", program[ip].instruction());
+			fmt::print("Unhandled system function!\n");
 			return;
 		}
 
-		ip = next_ip;
+		frames.pop_back();
+		NEXT_INSTR_AUTOPC()
+	}
+
+	{
+		INSTR(ljump_cond)
+		if (jump_flag)
+		{
+			ip = op.read<uint32_t>(8);
+			NEXT_INSTR()
+		}
+		NEXT_INSTR_AUTOPC()
+	}
+
+	{
+		INSTR(lfunc_return)
+		ip = current_callframe().return_address;
+		frames.pop_back();
+		NEXT_INSTR()
 	}
 }
 }
