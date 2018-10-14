@@ -34,6 +34,7 @@ enum class instruction : std::uint8_t
 	invoke_system,
 	func_return,
 	jump_cond,
+	tmp_anchor,
 };
 
 struct opcode
@@ -150,9 +151,14 @@ constexpr instruction_info
 		{{
 			{"targetip", 8, 4}
 		}}
+	},
+
+	tmp_anchor {
+		"<temporary>anchor",
+		8
 	};
 
-constexpr std::array<instruction_info, 8> infos {
+constexpr std::array<instruction_info, 9> infos {
 	local_push,
 	local_clone,
 	local_pop,
@@ -160,7 +166,8 @@ constexpr std::array<instruction_info, 8> infos {
 	invoke_user,
 	invoke_system,
 	func_return,
-	jump_cond
+	jump_cond,
+	tmp_anchor
 };
 
 constexpr auto mk(instruction_info info, std::array<uint64_t, 4> array = {})
