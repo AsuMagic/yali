@@ -9,7 +9,7 @@ namespace yali
 {
 struct callframe
 {
-	using address_type = uint32_t;
+	using address_type = uint64_t;
 	address_type local_frame_offset = 0;
 	address_type return_address;
 
@@ -28,6 +28,7 @@ struct vm
 	const callframe& current_callframe() const;
 	uint32_t local_pop();
 
+	vm();
 	void run(const std::vector<bc::opcode>& program);
 };
 }

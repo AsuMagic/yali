@@ -27,7 +27,7 @@ int main(/*int argc, char* argv[]*/)
 	yali::vm machine;
 	machine.run({
 		mk(local_push, {35, 0}),
-		mk(invoke_user, {0, 1}),
+		mk(invoke_user, {3, 1}),
 		mk(invoke_system, {0, 1}),
 
 		// fib
@@ -42,12 +42,12 @@ int main(/*int argc, char* argv[]*/)
 		mk(local_push, {1, 0}),
 		mk(local_clone, {0}),
 		mk(invoke_system, {0x11, 2}),
-		mk(invoke_user, {0, 1}),
+		mk(invoke_user, {3, 1}),
 
 		mk(local_push, {2, 0}),
 		mk(local_clone, {0}),
 		mk(invoke_system, {0x11, 2}),
-		mk(invoke_user, {0, 1}),
+		mk(invoke_user, {3, 1}),
 
 		mk(invoke_system, {0x10, 2}),
 

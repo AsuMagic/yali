@@ -122,7 +122,7 @@ constexpr instruction_info
 		"invoke_user",
 		4,
 		{{
-			{"funcid", 8, 4},
+			{"funcip", 8, 4},
 			{"paramframe", 40, 2}
 		}}
 	},

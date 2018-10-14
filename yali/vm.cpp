@@ -16,6 +16,12 @@ uint32_t vm::local_pop()
 	return ret;
 }
 
+vm::vm()
+{
+	frames.reserve(256);
+	locals.reserve(1024);
+}
+
 void vm::run(const std::vector<bc::opcode>& program)
 {
 	fmt::print("VM initializing, program size {} ({} bytes).\n", program.size(), program.size() * 8);
@@ -68,11 +74,11 @@ void vm::run(const std::vector<bc::opcode>& program)
 			break;
 
 		case bc::instruction::invoke_user: {
-			auto userfuncid = op.read<uint32_t>(8);
+			auto userfuncip = op.read<uint32_t>(8);
 			auto passthrough = op.read<uint16_t>(40);
 			//fmt::print("invoke_user {}\n", userfuncid);
 			frames.emplace_back(locals.size() - passthrough, next_ip);
-			next_ip = 3; // HACK
+			next_ip = userfuncip; // HACK
 		} break;
 
 		case bc::instruction::invoke_system: {
