@@ -87,92 +87,72 @@ struct param_info
 struct instruction_info
 {
 	std::string_view name;
-	uint8_t id; // TODO: less garbage
 	std::array<param_info, 4> params = {};
 };
 
-constexpr instruction_info
-	local_push {
+constexpr std::array<instruction_info, 9> infos {{
+	{
 		"local_push",
-		0,
 		{{
 			{"value", 8, 4},
 			{"typeinfo", 40, 1}
 		}}
 	},
 
-	local_clone {
+	{
 		"local_clone",
-		1,
 		{{
 			{"localid", 8, 4}
 		}}
 	},
 
-	local_pop {
+	{
 		"local_pop",
-		2
 	},
 
-	local_pop_but_top {
+	{
 		"local_pop_but_top",
-		3,
 		{{
 			{"count", 8, 4}
 		}}
 	},
 
-	invoke_user {
+	{
 		"invoke_user",
-		4,
 		{{
 			{"funcip", 8, 4},
 			{"paramframe", 40, 2}
 		}}
 	},
 
-	invoke_system {
+	{
 		"invoke_system",
-		5,
 		{{
 			{"sysfuncid", 8, 4},
 			{"paramframe", 40, 2}
 		}}
 	},
 
-	func_return {
+	{
 		"func_return",
-		6
 	},
 
-	jump_cond {
+	{
 		"jump_cond",
-		7,
 		{{
 			{"targetip", 8, 4}
 		}}
 	},
 
-	tmp_anchor {
+	{
 		"<temporary>anchor",
-		8
-	};
+	}
+}};
 
-constexpr std::array<instruction_info, 9> infos {
-	local_push,
-	local_clone,
-	local_pop,
-	local_pop_but_top,
-	invoke_user,
-	invoke_system,
-	func_return,
-	jump_cond,
-	tmp_anchor
-};
-
-constexpr auto mk(instruction_info info, std::array<uint64_t, 4> array = {})
+constexpr auto mk(bc::instruction instr, std::array<uint64_t, 4> array = {})
 {
-	opcode ret{info.id};
+	opcode ret{static_cast<uint8_t>(instr)};
+	instruction_info info = infos[static_cast<uint8_t>(instr)];
 
 	for (size_t i = 0; i < info.params.size(); ++i)
 	{

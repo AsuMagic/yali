@@ -24,36 +24,38 @@ int main(/*int argc, char* argv[]*/)
 	using namespace yali::bc;
 	using namespace yali::bc::def;
 
+	using in = instruction;
+
 	yali::vm machine;
 	machine.run({
-		mk(local_push, {35, 0}),
-		mk(invoke_user, {3, 1}),
-		mk(invoke_system, {0, 1}),
+		mk(in::local_push, {35, 0}),
+		mk(in::invoke_user, {3, 1}),
+		mk(in::invoke_system, {0, 1}),
 
 		// fib
-		mk(local_push, {2, 0}),
-		mk(local_clone, {0}),
-		mk(invoke_system, {0x20, 2}),
+		mk(in::local_push, {2, 0}),
+		mk(in::local_clone, {0}),
+		mk(in::invoke_system, {0x20, 2}),
 
 		// if block 1
-		mk(jump_cond, {18}), //TODO
+		mk(in::jump_cond, {18}), //TODO
 
 		// if block 2
-		mk(local_push, {1, 0}),
-		mk(local_clone, {0}),
-		mk(invoke_system, {0x11, 2}),
-		mk(invoke_user, {3, 1}),
+		mk(in::local_push, {1, 0}),
+		mk(in::local_clone, {0}),
+		mk(in::invoke_system, {0x11, 2}),
+		mk(in::invoke_user, {3, 1}),
 
-		mk(local_push, {2, 0}),
-		mk(local_clone, {0}),
-		mk(invoke_system, {0x11, 2}),
-		mk(invoke_user, {3, 1}),
+		mk(in::local_push, {2, 0}),
+		mk(in::local_clone, {0}),
+		mk(in::invoke_system, {0x11, 2}),
+		mk(in::invoke_user, {3, 1}),
 
-		mk(invoke_system, {0x10, 2}),
+		mk(in::invoke_system, {0x10, 2}),
 
-		mk(local_pop_but_top, {1}),
-		mk(func_return, {}),
+		mk(in::local_pop_but_top, {1}),
+		mk(in::func_return, {}),
 
-		mk(func_return, {})
+		mk(in::func_return, {})
 	});
 }
