@@ -29,7 +29,7 @@ enum class instruction : std::uint8_t
 	local_push,
 	local_clone,
 	local_pop,
-	local_swap,
+	local_pop_but_top,
 	invoke_user,
 	invoke_system,
 	func_return,
@@ -113,9 +113,12 @@ constexpr instruction_info
 		2
 	},
 
-	local_swap {
-		"local_swap",
-		3
+	local_pop_but_top {
+		"local_pop_but_top",
+		3,
+		{{
+			{"count", 8, 4}
+		}}
 	},
 
 	invoke_user {
@@ -153,7 +156,7 @@ constexpr std::array<instruction_info, 8> infos {
 	local_push,
 	local_clone,
 	local_pop,
-	local_swap,
+	local_pop_but_top,
 	invoke_user,
 	invoke_system,
 	func_return,

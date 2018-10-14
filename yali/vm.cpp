@@ -5,8 +5,8 @@
 #define INSTR(label) \
 	label: \
 	auto op = program[ip]; \
-	(void)op; \
-	/*fmt::print("{:5}: op {:15}, depth {:3}, locals: {:4}/{:4}    {}\n", \
+	(void)op; /*\
+	fmt::print("{:5}: op {:15}, depth {:3}, locals: {:4}/{:4}    {}\n", \
 		ip, \
 		bc::def::infos[op.instruction()].name, \
 		frames.size(), \
@@ -55,7 +55,7 @@ void vm::run(const std::vector<bc::opcode>& program)
 		&&llocal_push,
 		&&llocal_clone,
 		&&llocal_pop,
-		&&llocal_swap,
+		&&llocal_pop_but_top,
 		&&linvoke_user,
 		&&linvoke_system,
 		&&lfunc_return,
@@ -83,8 +83,10 @@ void vm::run(const std::vector<bc::opcode>& program)
 	}
 
 	{
-		INSTR(llocal_swap)
-		std::swap(locals[locals.size() - 2], locals[locals.size() - 1]);
+		INSTR(llocal_pop_but_top)
+		auto count = op.read<uint32_t>(8);
+		locals[locals.size() - count] = locals.back();
+		locals.resize(locals.size() - count + 1);
 		NEXT_INSTR_AUTOPC()
 	}
 

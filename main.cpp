@@ -36,7 +36,7 @@ int main(/*int argc, char* argv[]*/)
 		mk(invoke_system, {0x20, 2}),
 
 		// if block 1
-		mk(jump_cond, {19}), //TODO
+		mk(jump_cond, {18}), //TODO
 
 		// if block 2
 		mk(local_push, {1, 0}),
@@ -51,9 +51,7 @@ int main(/*int argc, char* argv[]*/)
 
 		mk(invoke_system, {0x10, 2}),
 
-		mk(local_swap),
-		mk(local_pop),
-
+		mk(local_pop_but_top, {1}),
 		mk(func_return, {}),
 
 		mk(func_return, {})
