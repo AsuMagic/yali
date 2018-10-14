@@ -1,3 +1,4 @@
+#include "debug.hpp"
 #include "vm.hpp"
 #include <fmt/core.h>
 #include <fmt/color.h>
@@ -5,15 +6,17 @@
 #define INSTR(label) \
 	label: \
 	auto op = program[ip]; \
-	(void)op; /*\
-	fmt::print("{:5}: op {:15}, depth {:3}, locals: {:4}/{:4}    {}\n", \
-		ip, \
-		bc::def::infos[op.instruction()].name, \
-		frames.size(), \
-		locals.size() - current_callframe().local_frame_offset, \
-		locals.size(), \
-		fmt::join(locals, " ")); \
-	(void)op; // inhibit warning*/
+	(void)op; /* inhibit warning */ \
+	if constexpr (debug::debug_mode) \
+	{ \
+		fmt::print("{:5}: op {:15}, depth {:3}, locals: {:4}/{:4}    {}\n", \
+			ip, \
+			bc::def::infos[op.instruction()].name, \
+			frames.size(), \
+			locals.size() - current_callframe().local_frame_offset, \
+			locals.size(), \
+			fmt::join(locals, " ")); \
+	} \
 
 #define DISPATCH() \
 	goto *jump_targets[program[ip].instruction()];

@@ -5,7 +5,7 @@
 
 namespace yali::debug
 {
-constexpr bool debug_mode = true;
+constexpr bool debug_mode = false;
 
 struct sexpr_printer
 {
