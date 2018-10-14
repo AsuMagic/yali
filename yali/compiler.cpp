@@ -25,4 +25,8 @@ std::optional<ast::sexpr> parse_ast(std::string_view source)
 	return {ast};
 }
 
+std::vector<bc::opcode> compile_program(const ast::sexpr& sexpr)
+{
+	return {};
+}
 }
