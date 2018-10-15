@@ -35,6 +35,19 @@ public:
 	uint32_t& local_ref_id(size_t id);
 	uint32_t& local_top();
 
+	template<size_t N>
+	auto local_popn()
+	{
+		std::array<uint32_t, N> ret;
+
+		for (size_t i = 0; i < N; ++i)
+		{
+			ret[i] = local_pop();
+		}
+
+		return ret;
+	}
+
 	vm();
 	int run(const std::vector<bc::opcode>& program);
 };

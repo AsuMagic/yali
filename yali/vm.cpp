@@ -138,20 +138,17 @@ int vm::run(const std::vector<bc::opcode>& program)
 		} break;
 
 		case bc::system_function::arith_add: {
-			auto a = local_pop();
-			auto b = local_pop();
+			auto [a, b] = local_popn<2>();
 			local_push(a + b);
 		} break;
 
 		case bc::system_function::arith_sub: {
-			auto a = local_pop();
-			auto b = local_pop();
+			auto [a, b] = local_popn<2>();
 			local_push(a - b);
 		} break;
 
 		case bc::system_function::cmp_lt: {
-			auto a = local_pop();
-			auto b = local_pop();
+			auto [a, b] = local_popn<2>();
 			jump_flag = a < b;
 		} break;
 
