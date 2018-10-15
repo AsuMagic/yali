@@ -41,17 +41,19 @@ struct opcode
 {
 	uint64_t value = {};
 
-	template<class T> T read(size_t off) const
+	template<class T>
+	constexpr T read(size_t off) const
 	{
 		return static_cast<T>(value >> off);
 	}
 
-	uint8_t instruction() const
+	constexpr uint8_t instruction() const
 	{
 		return read<uint8_t>(0);
 	}
 
-	template<class T> void write(T new_value, size_t off)
+	template<class T>
+	constexpr void write(T new_value, size_t off)
 	{
 		// Reset bits we are going to OR with the new_value
 		value &= (~uint64_t{}) ^ (T{} << off);
@@ -59,7 +61,7 @@ struct opcode
 		value |= new_value << off;
 	}
 
-	void write(uint64_t new_value, size_t off, size_t bytes)
+	constexpr void write(uint64_t new_value, size_t off, size_t bytes)
 	{
 		// Welcome to hell!
 		unsigned shift_amount = (64 - bytes * 8);

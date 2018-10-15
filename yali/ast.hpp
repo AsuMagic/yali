@@ -13,21 +13,14 @@ namespace x3 = boost::spirit::x3;
 
 struct sexpr;
 
-struct sexpr_value :
-	x3::variant<
-		std::string,
-		x3::forward_ast<sexpr>,
-		int,
-		double
-	>,
-	x3::position_tagged
-{
-	using base_type::base_type;
-	using base_type::operator=;
-};
+using sexpr_value = x3::variant<
+	x3::forward_ast<sexpr>,
+	std::string,
+	int,
+	double
+>;
 
-struct sexpr :
-	x3::position_tagged
+struct sexpr
 {
 	std::vector<sexpr_value> atoms;
 };

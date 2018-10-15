@@ -5,17 +5,15 @@
 
 #define INSTR(label) \
 	label: \
-	auto op = program[ip]; \
+	const auto& op = program[ip]; \
 	(void)op; /* inhibit warning */ \
 	if constexpr (debug::debug_mode) \
 	{ \
-		fmt::print("{:5}: op {:15}, depth {:3}, locals: {:4}/{:4}    {}\n", \
+		fmt::print("{:5}: op {:15}, depth {:3}, [{}]\n", \
 			ip, \
 			bc::def::infos[op.instruction()].name, \
 			frames.size(), \
-			locals.size() - current_callframe().local_frame_offset, \
-			locals.size(), \
-			fmt::join(locals, " ")); \
+			fmt::join(std::vector<uint32_t>{_locals.data(), _locals_top + 1}, " ")); \
 	} \
 
 #define DISPATCH() \
@@ -37,15 +35,37 @@ const callframe& vm::current_callframe() const
 
 uint32_t vm::local_pop()
 {
-	auto ret = locals.back();
-	locals.pop_back();
-	return ret;
+	return *(_locals_top--);
+}
+
+void vm::local_push(uint32_t value, uint8_t typeinfo)
+{
+	*(++_locals_top) = value;
+}
+
+uint32_t& vm::local_ref_stack(size_t depth)
+{
+	return *(_locals_top - depth);
+}
+
+uint32_t& vm::local_ref_id(size_t id)
+{
+	return *(current_callframe().local_frame + id);
+}
+
+uint32_t& vm::local_top()
+{
+	return *_locals_top;
 }
 
 vm::vm()
 {
 	frames.reserve(256);
-	locals.reserve(1024);
+
+	_locals.resize(1024 * 1024 / 4); // 1MiB locals
+	_locals_top = _locals.data() - 1;
+
+	frames.push_back({_locals_top, 0});
 }
 
 void vm::run(const std::vector<bc::opcode>& program)
@@ -69,27 +89,27 @@ void vm::run(const std::vector<bc::opcode>& program)
 
 	{
 		INSTR(llocal_push)
-		locals.push_back(op.read<uint32_t>(8));
+		local_push(op.read<uint32_t>(8), op.read<uint8_t>(40));
 		NEXT_INSTR_AUTOPC()
 	}
 
 	{
 		INSTR(llocal_clone)
-		locals.push_back(locals[current_callframe().local_frame_offset + op.read<uint32_t>(8)]);
+		local_push(local_ref_id(op.read<uint32_t>(8)));
 		NEXT_INSTR_AUTOPC()
 	}
 
 	{
 		INSTR(llocal_pop)
-		locals.pop_back();
+		local_pop();
 		NEXT_INSTR_AUTOPC()
 	}
 
 	{
 		INSTR(llocal_pop_but_top)
 		auto count = op.read<uint32_t>(8);
-		locals[locals.size() - count] = locals.back();
-		locals.resize(locals.size() - count + 1);
+		local_ref_stack(count) = local_top();
+		_locals_top -= count;
 		NEXT_INSTR_AUTOPC()
 	}
 
@@ -98,16 +118,17 @@ void vm::run(const std::vector<bc::opcode>& program)
 		auto userfuncip = op.read<uint32_t>(8);
 		auto passthrough = op.read<uint16_t>(40);
 		//fmt::print("invoke_user {}\n", userfuncid);
-		frames.emplace_back(locals.size() - passthrough, ip + 1);
+		frames.emplace_back(_locals_top - passthrough + 1, ip + 1);
 		ip = userfuncip;
 		NEXT_INSTR()
 	}
 
 	{
 		INSTR(linvoke_system)
+		// TODO: WHY DO THIS SHIT?!
 		auto sysfuncid = program[ip].read<uint32_t>(8);
 		auto passthrough = program[ip].read<uint16_t>(40);
-		frames.emplace_back(locals.size() - passthrough, ip + 1);
+		frames.emplace_back(_locals_top - passthrough, ip + 1);
 		//fmt::print("invoke_system {}\n", sysfuncid);
 		switch (static_cast<bc::system_function>(sysfuncid))
 		{
@@ -120,13 +141,13 @@ void vm::run(const std::vector<bc::opcode>& program)
 		case bc::system_function::arith_add: {
 			auto a = local_pop();
 			auto b = local_pop();
-			locals.push_back(a + b);
+			local_push(a + b);
 		} break;
 
 		case bc::system_function::arith_sub: {
 			auto a = local_pop();
 			auto b = local_pop();
-			locals.push_back(a - b);
+			local_push(a - b);
 		} break;
 
 		case bc::system_function::cmp_lt: {
