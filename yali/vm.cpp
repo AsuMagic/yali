@@ -128,7 +128,6 @@ void vm::run(const std::vector<bc::opcode>& program)
 		INSTR(linvoke_user)
 		auto userfuncip = op.read<uint32_t>(8);
 		auto passthrough = op.read<uint16_t>(40);
-		//fmt::print("invoke_user {}\n", userfuncid);
 		frame_push({_locals_top - passthrough + 1, ip + 1});
 		ip = userfuncip;
 		NEXT_INSTR()
@@ -136,11 +135,8 @@ void vm::run(const std::vector<bc::opcode>& program)
 
 	{
 		INSTR(linvoke_system)
-		// TODO: WHY DO THIS SHIT?!
 		auto sysfuncid = program[ip].read<uint32_t>(8);
 		auto passthrough = program[ip].read<uint16_t>(40);
-		frame_push({_locals_top - passthrough, ip + 1});
-		//fmt::print("invoke_system {}\n", sysfuncid);
 		switch (static_cast<bc::system_function>(sysfuncid))
 		{
 		case bc::system_function::print_arg: {
@@ -172,7 +168,6 @@ void vm::run(const std::vector<bc::opcode>& program)
 			return;
 		}
 
-		frame_pop();
 		NEXT_INSTR_AUTOPC()
 	}
 
