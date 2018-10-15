@@ -12,23 +12,22 @@ struct callframe
 	using address_type = uint64_t;
 	uint32_t* local_frame;
 	address_type return_address;
-
-	callframe(uint32_t* p_local_frame, uint64_t p_return_address) :
-		local_frame{p_local_frame},
-		return_address{address_type(p_return_address)}
-	{}
 };
 
 class vm
 {
-	std::vector<callframe> frames;
+	std::vector<callframe> _frames;
 	std::vector<uint32_t> _locals;
 	uint32_t* _locals_top;
+	callframe* _frames_top;
 
 public:
 	bool jump_flag = false;
 
 	const callframe& current_callframe() const;
+	void frame_push(callframe frame);
+	callframe::address_type frame_pop();
+
 	uint32_t local_pop();
 	void local_push(uint32_t value, uint8_t typeinfo = 0);
 	uint32_t& local_ref_stack(size_t depth);

@@ -12,7 +12,7 @@
 		fmt::print("{:5}: op {:15}, depth {:3}, [{}]\n", \
 			ip, \
 			bc::def::infos[op.instruction()].name, \
-			frames.size(), \
+			_frames_top - _frames.data(), \
 			fmt::join(std::vector<uint32_t>{_locals.data(), _locals_top + 1}, " ")); \
 	} \
 
@@ -30,7 +30,18 @@ namespace yali
 {
 const callframe& vm::current_callframe() const
 {
-	return frames.back();
+	return *_frames_top;
+}
+
+void vm::frame_push(callframe frame)
+{
+	new(++_frames_top) callframe{frame};
+}
+
+callframe::address_type vm::frame_pop()
+{
+	// This is OK because return a copy of it.
+	return (_frames_top--)->return_address;
 }
 
 uint32_t vm::local_pop()
@@ -60,12 +71,12 @@ uint32_t& vm::local_top()
 
 vm::vm()
 {
-	frames.reserve(256);
-
 	_locals.resize(1024 * 1024 / 4); // 1MiB locals
 	_locals_top = _locals.data() - 1;
 
-	frames.push_back({_locals_top, 0});
+	_frames.resize(256); // 256 nested calls
+	_frames_top = _frames.data();
+	new(_frames_top) callframe{_locals_top, 0};
 }
 
 void vm::run(const std::vector<bc::opcode>& program)
@@ -118,7 +129,7 @@ void vm::run(const std::vector<bc::opcode>& program)
 		auto userfuncip = op.read<uint32_t>(8);
 		auto passthrough = op.read<uint16_t>(40);
 		//fmt::print("invoke_user {}\n", userfuncid);
-		frames.emplace_back(_locals_top - passthrough + 1, ip + 1);
+		frame_push({_locals_top - passthrough + 1, ip + 1});
 		ip = userfuncip;
 		NEXT_INSTR()
 	}
@@ -128,7 +139,7 @@ void vm::run(const std::vector<bc::opcode>& program)
 		// TODO: WHY DO THIS SHIT?!
 		auto sysfuncid = program[ip].read<uint32_t>(8);
 		auto passthrough = program[ip].read<uint16_t>(40);
-		frames.emplace_back(_locals_top - passthrough, ip + 1);
+		frame_push({_locals_top - passthrough, ip + 1});
 		//fmt::print("invoke_system {}\n", sysfuncid);
 		switch (static_cast<bc::system_function>(sysfuncid))
 		{
@@ -161,7 +172,7 @@ void vm::run(const std::vector<bc::opcode>& program)
 			return;
 		}
 
-		frames.pop_back();
+		frame_pop();
 		NEXT_INSTR_AUTOPC()
 	}
 
@@ -177,8 +188,7 @@ void vm::run(const std::vector<bc::opcode>& program)
 
 	{
 		INSTR(lfunc_return)
-		ip = current_callframe().return_address;
-		frames.pop_back();
+		ip = frame_pop();
 		NEXT_INSTR()
 	}
 }
