@@ -27,7 +27,7 @@ int main(/*int argc, char* argv[]*/)
 	using in = instruction;
 
 	yali::vm machine;
-	machine.run({
+	fmt::print("Program exited with code {}\n", machine.run({
 		mk(in::local_push, {35, 0}),
 		mk(in::invoke_user, {3, 1}),
 		mk(in::invoke_system, {0, 1}),
@@ -57,5 +57,5 @@ int main(/*int argc, char* argv[]*/)
 		mk(in::func_return, {}),
 
 		mk(in::func_return, {})
-	});
+	}));
 }

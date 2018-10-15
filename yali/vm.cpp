@@ -71,15 +71,12 @@ uint32_t& vm::local_top()
 
 vm::vm()
 {
-	_locals.resize(1024 * 1024 / 4); // 1MiB locals
 	_locals_top = _locals.data() - 1;
-
-	_frames.resize(256); // 256 nested calls
-	_frames_top = _frames.data();
-	new(_frames_top) callframe{_locals_top, 0};
+	_frames_top = _frames.data() - 1;
+	frame_push({_locals_top, 0});
 }
 
-void vm::run(const std::vector<bc::opcode>& program)
+int vm::run(const std::vector<bc::opcode>& program)
 {
 	fmt::print("VM initializing, program size {} ({} bytes).\n", program.size(), program.size() * 8);
 
@@ -136,13 +133,10 @@ void vm::run(const std::vector<bc::opcode>& program)
 	{
 		INSTR(linvoke_system)
 		auto sysfuncid = program[ip].read<uint32_t>(8);
-		auto passthrough = program[ip].read<uint16_t>(40);
 		switch (static_cast<bc::system_function>(sysfuncid))
 		{
-		case bc::system_function::print_arg: {
-			auto a = local_pop();
-			fmt::print("{}\n", a);
-			return;
+		case bc::system_function::exit: {
+			return static_cast<int>(local_pop());
 		} break;
 
 		case bc::system_function::arith_add: {
@@ -165,7 +159,7 @@ void vm::run(const std::vector<bc::opcode>& program)
 
 		default:
 			fmt::print("Unhandled system function!\n");
-			return;
+			return -1;
 		}
 
 		NEXT_INSTR_AUTOPC()

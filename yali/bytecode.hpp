@@ -9,7 +9,7 @@ namespace yali::bc
 {
 enum class system_function
 {
-	print_arg = 0x00000000,
+	exit      = 0x00000000,
 
 	arith_add = 0x00000010,
 	arith_sub = 0x00000011,
@@ -130,8 +130,7 @@ constexpr std::array<instruction_info, 9> infos {{
 	{
 		"invoke_system",
 		{{
-			{"sysfuncid", 8, 4},
-			{"paramframe", 40, 2}
+			{"sysfuncid", 8, 4}
 		}}
 	},
 
