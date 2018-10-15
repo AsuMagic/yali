@@ -78,8 +78,6 @@ vm::vm()
 
 int vm::run(const std::vector<bc::opcode>& program)
 {
-	fmt::print("VM initializing, program size {} ({} bytes).\n", program.size(), program.size() * 8);
-
 	size_t ip = 0;
 
 	std::array jump_targets {
