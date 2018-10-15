@@ -16,10 +16,11 @@ struct callframe
 
 class vm
 {
-	std::array<callframe, 256> _frames;
-	std::array<uint32_t, 1024 * 1024 / 4> _locals;
 	uint32_t* _locals_top;
 	callframe* _frames_top;
+
+	std::array<callframe, 256> _frames;
+	std::array<uint32_t, 1024 * 1024 / 4> _locals;
 
 public:
 	bool jump_flag = false;
