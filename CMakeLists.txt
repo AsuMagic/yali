@@ -11,15 +11,13 @@ add_executable(${PROJECT_NAME}
 
 target_compile_options(${PROJECT_NAME} PUBLIC
 	"-std=c++1z"
-	"-pthread"
 	"-Wall"
 	"-Wextra"
 	"-Wno-missing-braces"
-	"-ggdb"
+	$<$<CONFIG:RELEASE>:-O3>
 )
 
 target_link_libraries(${PROJECT_NAME}
 	boost_system
-	pthread
 	fmt
 )
