@@ -147,6 +147,9 @@ constexpr std::array<instruction_info, 9> infos {{
 
 	{
 		"<temporary>anchor",
+		{{
+			{"anchorid", 8, 4}
+		}}
 	}
 }};
 
